@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2014 Realm Inc.
+// Copyright 2017 Realm Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,71 +18,422 @@
 
 #import "RLMTestCase.h"
 
-@implementation DogArrayObject
+@interface PrimitiveArrayPropertyTests : RLMTestCase
 @end
 
-@interface ArrayPropertyTests : RLMTestCase
-@end
+@implementation PrimitiveArrayPropertyTests {
+    AllPrimitiveArrays *unmanaged;
+    AllPrimitiveArrays *managed;
+    AllOptionalPrimitiveArrays *optUnmanaged;
+    AllOptionalPrimitiveArrays *optManaged;
+    RLMRealm *realm;
+}
 
-@implementation ArrayPropertyTests
-
--(void)testPopulateEmptyArray {
-    RLMRealm *realm = [self realmWithTestPath];
-
+- (void)setUp {
+    unmanaged = [[AllPrimitiveArrays alloc] init];
+    optUnmanaged = [[AllOptionalPrimitiveArrays alloc] init];
+    realm = [RLMRealm defaultRealm];
     [realm beginWriteTransaction];
-    ArrayPropertyObject *array = [ArrayPropertyObject createInRealm:realm withValue:@[@"arrayObject", @[], @[]]];
-    XCTAssertNotNil(array.array, @"Should be able to get an empty array");
-    XCTAssertEqual(array.array.count, 0U, @"Should start with no array elements");
+    managed = [AllPrimitiveArrays createInRealm:realm withValue:@[]];
+    optManaged = [AllOptionalPrimitiveArrays createInRealm:realm withValue:@[]];
+}
 
-    StringObject *obj = [[StringObject alloc] init];
-    obj.stringCol = @"a";
-    [array.array addObject:obj];
-    [array.array addObject:[StringObject createInRealm:realm withValue:@[@"b"]]];
-    [array.array addObject:obj];
-    [realm commitWriteTransaction];
+- (void)tearDown {
+    [realm cancelWriteTransaction];
+}
 
-    XCTAssertEqual(array.array.count, 3U, @"Should have three elements in array");
-    XCTAssertEqualObjects([array.array[0] stringCol], @"a", @"First element should have property value 'a'");
-    XCTAssertEqualObjects([array.array[1] stringCol], @"b", @"Second element should have property value 'b'");
-    XCTAssertEqualObjects([array.array[2] stringCol], @"a", @"Third element should have property value 'a'");
+#pragma mark - Unmanaged
 
-    RLMArray *arrayProp = array.array;
-    RLMAssertThrowsWithReasonMatching([arrayProp addObject:obj], @"write transaction");
+- (void)testUnmanagedCount {
+    XCTAssertEqual(unmanaged.intObj.count, 0U);
+    [unmanaged.intObj addObject:@1];
+    XCTAssertEqual(unmanaged.intObj.count, 1U);
+}
 
-    // make sure we can fast enumerate
-    for (RLMObject *obj in array.array) {
-        XCTAssertTrue(obj.description.length, @"Object should have description");
+- (void)testUnmanagedType {
+    XCTAssertEqual(unmanaged.boolObj.type, RLMPropertyTypeBool);
+    XCTAssertEqual(unmanaged.intObj.type, RLMPropertyTypeInt);
+    XCTAssertEqual(unmanaged.floatObj.type, RLMPropertyTypeFloat);
+    XCTAssertEqual(unmanaged.doubleObj.type, RLMPropertyTypeDouble);
+    XCTAssertEqual(unmanaged.stringObj.type, RLMPropertyTypeString);
+    XCTAssertEqual(unmanaged.dataObj.type, RLMPropertyTypeData);
+    XCTAssertEqual(unmanaged.dateObj.type, RLMPropertyTypeDate);
+    XCTAssertEqual(optUnmanaged.boolObj.type, RLMPropertyTypeBool);
+    XCTAssertEqual(optUnmanaged.intObj.type, RLMPropertyTypeInt);
+    XCTAssertEqual(optUnmanaged.floatObj.type, RLMPropertyTypeFloat);
+    XCTAssertEqual(optUnmanaged.doubleObj.type, RLMPropertyTypeDouble);
+    XCTAssertEqual(optUnmanaged.stringObj.type, RLMPropertyTypeString);
+    XCTAssertEqual(optUnmanaged.dataObj.type, RLMPropertyTypeData);
+    XCTAssertEqual(optUnmanaged.dateObj.type, RLMPropertyTypeDate);
+}
+
+- (void)testUnmanagedOptional {
+    XCTAssertFalse(unmanaged.boolObj.optional);
+    XCTAssertFalse(unmanaged.intObj.optional);
+    XCTAssertFalse(unmanaged.floatObj.optional);
+    XCTAssertFalse(unmanaged.doubleObj.optional);
+    XCTAssertFalse(unmanaged.stringObj.optional);
+    XCTAssertFalse(unmanaged.dataObj.optional);
+    XCTAssertFalse(unmanaged.dateObj.optional);
+    XCTAssertTrue(optUnmanaged.boolObj.optional);
+    XCTAssertTrue(optUnmanaged.intObj.optional);
+    XCTAssertTrue(optUnmanaged.floatObj.optional);
+    XCTAssertTrue(optUnmanaged.doubleObj.optional);
+    XCTAssertTrue(optUnmanaged.stringObj.optional);
+    XCTAssertTrue(optUnmanaged.dataObj.optional);
+    XCTAssertTrue(optUnmanaged.dateObj.optional);
+}
+
+- (void)testUnmanagedObjectClassName {
+    XCTAssertNil(unmanaged.boolObj.objectClassName);
+    XCTAssertNil(unmanaged.intObj.objectClassName);
+    XCTAssertNil(unmanaged.floatObj.objectClassName);
+    XCTAssertNil(unmanaged.doubleObj.objectClassName);
+    XCTAssertNil(unmanaged.stringObj.objectClassName);
+    XCTAssertNil(unmanaged.dataObj.objectClassName);
+    XCTAssertNil(unmanaged.dateObj.objectClassName);
+    XCTAssertNil(optUnmanaged.boolObj.objectClassName);
+    XCTAssertNil(optUnmanaged.intObj.objectClassName);
+    XCTAssertNil(optUnmanaged.floatObj.objectClassName);
+    XCTAssertNil(optUnmanaged.doubleObj.objectClassName);
+    XCTAssertNil(optUnmanaged.stringObj.objectClassName);
+    XCTAssertNil(optUnmanaged.dataObj.objectClassName);
+    XCTAssertNil(optUnmanaged.dateObj.objectClassName);
+}
+
+- (void)testUnmanagedRealm {
+    XCTAssertNil(unmanaged.boolObj.realm);
+    XCTAssertNil(unmanaged.intObj.realm);
+    XCTAssertNil(unmanaged.floatObj.realm);
+    XCTAssertNil(unmanaged.doubleObj.realm);
+    XCTAssertNil(unmanaged.stringObj.realm);
+    XCTAssertNil(unmanaged.dataObj.realm);
+    XCTAssertNil(unmanaged.dateObj.realm);
+    XCTAssertNil(optUnmanaged.boolObj.realm);
+    XCTAssertNil(optUnmanaged.intObj.realm);
+    XCTAssertNil(optUnmanaged.floatObj.realm);
+    XCTAssertNil(optUnmanaged.doubleObj.realm);
+    XCTAssertNil(optUnmanaged.stringObj.realm);
+    XCTAssertNil(optUnmanaged.dataObj.realm);
+    XCTAssertNil(optUnmanaged.dateObj.realm);
+}
+
+- (void)testUnmanagedInvalidated {
+    RLMArray *array;
+    @autoreleasepool {
+        AllPrimitiveArrays *obj = [[AllPrimitiveArrays alloc] init];
+        array = obj.intObj;
+        XCTAssertFalse(array.invalidated);
     }
+    XCTAssertFalse(array.invalidated);
 }
 
--(void)testModifyDetatchedArray {
-    RLMRealm *realm = [self realmWithTestPath];
 
-    [realm beginWriteTransaction];
-    ArrayPropertyObject *arObj = [ArrayPropertyObject createInRealm:realm withValue:@[@"arrayObject", @[], @[]]];
-    XCTAssertNotNil(arObj.array, @"Should be able to get an empty array");
-    XCTAssertEqual(arObj.array.count, 0U, @"Should start with no array elements");
+// unmanaged.boolObj @YES @NO
+// unmanaged.intObj @2 @3
+// unmanaged.floatObj @2.2f @3.3f
+// unmanaged.doubleObj @2.2 @3.3
+// unmanaged.stringObj @"a" @"b"
+// unmanaged.dataObj data(1) data(2)
+// unmanaged.dateObj date(1) date(2)
+// optUnmanaged.boolObj @YES @NO NSNull.null
+// optUnmanaged.intObj @2 @3 NSNull.null
+// optUnmanaged.floatObj @2.2f @3.3f NSNull.null
+// optUnmanaged.doubleObj @2.2 @3.3 NSNull.null
+// optUnmanaged.stringObj @"a" @"b" NSNull.null
+// optUnmanaged.dataObj data(1) data(2) NSNull.null
+// optUnmanaged.dateObj date(1) date(2) NSNull.null
 
-    StringObject *obj = [[StringObject alloc] init];
-    obj.stringCol = @"a";
-    RLMArray *array = arObj.array;
-    [array addObject:obj];
-    [array addObject:[StringObject createInRealm:realm withValue:@[@"b"]]];
-    [realm commitWriteTransaction];
-
-    XCTAssertEqual(array.count, 2U, @"Should have two elements in array");
-    XCTAssertEqualObjects([array[0] stringCol], @"a", @"First element should have property value 'a'");
-    XCTAssertEqualObjects([arObj.array[1] stringCol], @"b", @"Second element should have property value 'b'");
-
-    RLMAssertThrowsWithReasonMatching([array addObject:obj], @"write transaction");
+static NSDate *date(int i) {
+    return [NSDate dateWithTimeIntervalSince1970:i];
+}
+static NSData *data(int i) {
+    return [NSData dataWithBytesNoCopy:calloc(i, 1) length:i freeWhenDone:YES];
 }
 
-- (void)testDeleteUnmanagedObjectWithArrayProperty {
-    ArrayPropertyObject *arObj = [[ArrayPropertyObject alloc] initWithValue:@[@"arrayObject", @[@[@"a"]], @[]]];
-    RLMArray *stringArray = arObj.array;
-    XCTAssertFalse(stringArray.isInvalidated, @"stringArray should be valid after creation.");
-    arObj = nil;
-    XCTAssertFalse(stringArray.isInvalidated, @"stringArray should still be valid after parent deletion.");
+- (void)testUnmanagedObjectAtIndex {
+    RLMAssertThrowsWithReason([unmanaged.intObj objectAtIndex:0],
+                              @"Index 0 is out of bounds (must be less than 0).");
+
+    [unmanaged.intObj addObject:@1];
+    XCTAssertEqualObjects([unmanaged.intObj objectAtIndex:0], @1);
+}
+
+- (void)testUnmanagedFirstObject {
+    XCTAssertNil($array.firstObject);
+
+    %r [$array addObjects:$values];
+    %r XCTAssertEqualObjects($array.firstObject, $first);
+
+    %o [$array addObject:NSNull.null];
+    %o XCTAssertEqualObjects($array.firstObject, NSNull.null);
+
+    %o [$array removeAllObjects];
+
+    %o [$array addObjects:$values];
+    %o XCTAssertEqualObjects($array.firstObject, $first);
+}
+
+- (void)testUnmanagedLastObject {
+    XCTAssertNil($array.lastObject);
+
+    [$array addObjects:$values];
+    XCTAssertEqualObjects($array.lastObject, $last);
+
+    %o [$array removeLastObject];
+    %o XCTAssertEqualObjects($array.lastObject, $v1);
+}
+
+- (void)testUnmanagedAddObject {
+    RLMAssertThrowsWithReason([$array addObject:$wrong], ^n @"Invalid value '$wdesc' of type '$wtype' for expected type '$type'");
+    %r RLMAssertThrowsWithReason([$array addObject:NSNull.null], ^n @"Invalid value '<null>' of type 'NSNull' for expected type '$type'");
+
+    [$array addObject:$v0];
+    XCTAssertEqualObjects($array[0], $v0);
+
+    %o [$array addObject:NSNull.null];
+    %o XCTAssertEqualObjects($array[1], NSNull.null);
+}
+
+- (void)testUnmanagedAddObjects {
+    RLMAssertThrowsWithReason([$array addObjects:@[$wrong]], ^n @"Invalid value '$wdesc' of type '$wtype' for expected type '$type'");
+    %r RLMAssertThrowsWithReason([$array addObjects:@[NSNull.null]], ^n @"Invalid value '<null>' of type 'NSNull' for expected type '$type'");
+
+    [$array addObjects:$values];
+    XCTAssertEqualObjects($array[0], $v0);
+    XCTAssertEqualObjects($array[1], $v1);
+    %o XCTAssertEqualObjects($array[2], NSNull.null);
+}
+
+- (void)testUnmanagedInsertObject {
+    RLMAssertThrowsWithReason([$array insertObject:$wrong atIndex:0], ^n @"Invalid value '$wdesc' of type '$wtype' for expected type '$type'");
+    %r RLMAssertThrowsWithReason([$array insertObject:NSNull.null atIndex:0], ^n @"Invalid value '<null>' of type 'NSNull' for expected type '$type'");
+    RLMAssertThrowsWithReason([$array insertObject:$v0 atIndex:1], ^n @"Index 1 is out of bounds (must be less than 1).");
+
+    [$array insertObject:$v0 atIndex:0];
+    XCTAssertEqualObjects($array[0], $v0);
+
+    [$array insertObject:$v1 atIndex:0];
+    XCTAssertEqualObjects($array[0], $v1);
+    XCTAssertEqualObjects($array[1], $v0);
+
+    %o [$array insertObject:NSNull.null atIndex:1];
+    %o XCTAssertEqualObjects($array[0], $v1);
+    %o XCTAssertEqualObjects($array[1], NSNull.null);
+    %o XCTAssertEqualObjects($array[2], $v0);
+}
+
+- (void)testUnmanagedRemoveObject {
+    RLMAssertThrowsWithReason([$array removeObjectAtIndex:0], ^n @"Index 0 is out of bounds (must be less than 0).");
+
+    [$array addObjects:$values];
+    %r XCTAssertEqual($array.count, 2U);
+    %o XCTAssertEqual($array.count, 3U);
+
+    %r RLMAssertThrowsWithReason([$array removeObjectAtIndex:2], ^n @"Index 2 is out of bounds (must be less than 2).");
+    %o RLMAssertThrowsWithReason([$array removeObjectAtIndex:3], ^n @"Index 3 is out of bounds (must be less than 3).");
+
+    [$array removeObjectAtIndex:0];
+    %r XCTAssertEqual($array.count, 1U);
+    %o XCTAssertEqual($array.count, 2U);
+
+    XCTAssertEqualObjects($array[0], $v1);
+    %o XCTAssertEqualObjects($array[1], NSNull.null);
+}
+
+- (void)testUnmanagedRemoveLastObject {
+    XCTAssertNoThrow([$array removeLastObject]);
+
+    [$array addObjects:$values];
+    %r XCTAssertEqual($array.count, 2U);
+    %o XCTAssertEqual($array.count, 3U);
+
+    [$array removeLastObject];
+    %r XCTAssertEqual($array.count, 1U);
+    %o XCTAssertEqual($array.count, 2U);
+
+    XCTAssertEqualObjects($array[0], $v0);
+    %o XCTAssertEqualObjects($array[1], $v1);
+}
+
+- (void)testUnmanagedReplace {
+    RLMAssertThrowsWithReason([$array replaceObjectAtIndex:0 withObject:$v0], ^n @"Index 0 is out of bounds (must be less than 0).");
+
+    [$array addObject:$v0]; ^nl [$array replaceObjectAtIndex:0 withObject:$v1]; ^nl XCTAssertEqualObjects($array[0], $v1); ^nl 
+
+    %o [$array replaceObjectAtIndex:0 withObject:NSNull.null]; ^nl XCTAssertEqualObjects($array[0], NSNull.null);
+
+    RLMAssertThrowsWithReason([$array replaceObjectAtIndex:0 withObject:$wrong], ^n @"Invalid value '$wdesc' of type '$wtype' for expected type '$type'");
+    %r RLMAssertThrowsWithReason([$array replaceObjectAtIndex:0 withObject:NSNull.null], ^n @"Invalid value '<null>' of type 'NSNull' for expected type '$type'");
+}
+
+- (void)testUnmanagedMove {
+    RLMAssertThrowsWithReason([$array moveObjectAtIndex:0 toIndex:1], ^n @"Index 0 is out of bounds (must be less than 0).");
+    RLMAssertThrowsWithReason([$array moveObjectAtIndex:1 toIndex:0], ^n @"Index 1 is out of bounds (must be less than 0).");
+
+    [$array addObjects:@[$v0, $v1, $v0, $v1]];
+
+    [$array moveObjectAtIndex:2 toIndex:0];
+
+    XCTAssertEqualObjects([$array valueForKey:@"self"], ^n (@[$v0, $v0, $v1, $v1]));
+}
+
+- (void)testUnmanagedExchange {
+    RLMAssertThrowsWithReason([$array exchangeObjectAtIndex:0 withObjectAtIndex:1], ^n @"Index 0 is out of bounds (must be less than 0).");
+    RLMAssertThrowsWithReason([$array exchangeObjectAtIndex:1 withObjectAtIndex:0], ^n @"Index 1 is out of bounds (must be less than 0).");
+
+    [$array addObjects:@[$v0, $v1, $v0, $v1]];
+
+    [$array exchangeObjectAtIndex:2 withObjectAtIndex:1];
+
+    XCTAssertEqualObjects([$array valueForKey:@"self"], ^n (@[$v0, $v0, $v1, $v1]));
+}
+
+- (void)testUnmanagedIndexOfObject {
+    XCTAssertEqual(NSNotFound, [$array indexOfObject:$v0]);
+
+    RLMAssertThrowsWithReason([$array indexOfObject:$wrong], ^n @"Invalid value '$wdesc' of type '$wtype' for expected type '$type'");
+
+    %r RLMAssertThrowsWithReason([$array indexOfObject:NSNull.null], ^n @"Invalid value '<null>' of type 'NSNull' for expected type '$type'");
+    %o XCTAssertEqual(NSNotFound, [$array indexOfObject:NSNull.null]);
+
+    [$array addObjects:$values];
+
+    XCTAssertEqual(1U, [$array indexOfObject:$v1]);
+}
+
+- (void)testUnmanagedIndexOfObjectWhere {
+    XCTAssertEqual(NSNotFound, [$array indexOfObjectWhere:@"TRUEPREDICATE"]);
+
+    [$array addObjects:$values];
+
+    XCTAssertEqual(0U, [$array indexOfObjectWhere:@"TRUEPREDICATE"]);
+    XCTAssertEqual(NSNotFound, [$array indexOfObjectWhere:@"FALSEPREDICATE"]);
+}
+
+- (void)testUnmanagedIndexOfObjectWithPredicate {
+    XCTAssertEqual(NSNotFound, [$array indexOfObjectWithPredicate:[NSPredicate predicateWithValue:YES]]);
+
+    [$array addObjects:$values];
+
+    XCTAssertEqual(0U, [$array indexOfObjectWithPredicate:[NSPredicate predicateWithValue:YES]]);
+    XCTAssertEqual(NSNotFound, [$array indexOfObjectWithPredicate:[NSPredicate predicateWithValue:NO]]);
+}
+
+- (void)testUnmanagedSort {
+    %unman RLMAssertThrowsWithReason([$array sortedResultsUsingKeyPath:@"self" ascending:NO], ^n @"This method may only be called on RLMArray instances retrieved from an RLMRealm");
+}
+
+- (void)testUnmanagedFilter {
+    %unman RLMAssertThrowsWithReason([$array objectsWhere:@"TRUEPREDICATE"], ^n @"This method may only be called on RLMArray instances retrieved from an RLMRealm");
+    %unman RLMAssertThrowsWithReason([$array objectsWithPredicate:[NSPredicate predicateWithValue:YES]], ^n @"This method may only be called on RLMArray instances retrieved from an RLMRealm");
+}
+
+- (void)testUnmanagedNotifications {
+    %unman RLMAssertThrowsWithReason([$array addNotificationBlock:^(__unused id a, __unused id c, __unused id e) { }], ^n @"This method may only be called on RLMArray instances retrieved from an RLMRealm");
+}
+
+- (void)testUnmanagedMin {
+    %nominmax RLMAssertThrowsWithReason([$array minOfProperty:@"self"], ^n @"minOfProperty: is not supported for $type array");
+
+    %minmax XCTAssertNil([$array minOfProperty:@"self"]);
+
+    %minmax [$array addObjects:$values];
+
+    %minmax XCTAssertEqualObjects([$array minOfProperty:@"self"], $v0);
+}
+
+- (void)testUnmanagedMax {
+    %nominmax RLMAssertThrowsWithReason([$array maxOfProperty:@"self"], ^n @"maxOfProperty: is not supported for $type array");
+
+    %minmax XCTAssertNil([$array maxOfProperty:@"self"]);
+
+    %minmax [$array addObjects:$values];
+
+    %minmax XCTAssertEqualObjects([$array maxOfProperty:@"self"], $v1);
+}
+
+- (void)testUnmanagedSum {
+    %nosum RLMAssertThrowsWithReason([$array sumOfProperty:@"self"], ^n @"sumOfProperty: is not supported for $type array");
+
+    %sum XCTAssertEqualObjects([$array sumOfProperty:@"self"], @0);
+
+    %sum [$array addObjects:$values];
+
+    %sum XCTAssertEqualObjects([$array sumOfProperty:@"self"], @($s0 + $s1));
+}
+
+- (void)testUnmanagedAverage {
+    %noavg RLMAssertThrowsWithReason([$array averageOfProperty:@"self"], ^n @"averageOfProperty: is not supported for $type array");
+
+    %avg XCTAssertNil([$array averageOfProperty:@"self"]);
+
+    %avg [$array addObjects:$values];
+
+    %avg XCTAssertEqualWithAccuracy([$array averageOfProperty:@"self"].doubleValue, ($s0 + $s1) / 2.0, .001);
+}
+
+- (void)testUnmanagedFastEnumeration {
+    for (int i = 0; i < 10; ++i) {
+        [$array addObjects:$values];
+    }
+
+    { ^nl NSUInteger i = 0; ^nl NSArray *values = $values; ^nl for (id value in $array) { ^nl XCTAssertEqualObjects(values[i++ % values.count], value); ^nl } ^nl XCTAssertEqual(i, $array.count); ^nl } ^nl 
+}
+
+- (void)testUnmanagedFastEnumerationWithMutation {
+    // this is sort of an open question
+}
+
+- (void)testUnmanagedValueForKey {
+    XCTAssertEqualObjects([$array valueForKey:@"self"], @[]);
+
+    [$array addObjects:$values];
+
+    XCTAssertEqualObjects([$array valueForKey:@"self"], ($values));
+
+    RLMAssertThrowsWithReason([$array valueForKey:@"count"], ^n @"this class is not key value coding-compliant for the key count");
+}
+
+- (void)testUnmanagedSetValueForKey {
+    RLMAssertThrowsWithReason([$array setValue:@0 forKey:@"not self"], ^n @"idk");
+    RLMAssertThrowsWithReason([$array setValue:$wrong forKey:@"self"], ^n @"Invalid value '$wdesc' of type '$wtype' for expected type '$type'");
+    %r RLMAssertThrowsWithReason([$array setValue:NSNull.null forKey:@"self"], ^n @"Invalid value '<null>' of type 'NSNull' for expected type '$type'");
+
+    [$array addObjects:$values];
+
+    [$array setValue:$v0 forKey:@"self"];
+
+    XCTAssertEqualObjects($array[0], $v0);
+    XCTAssertEqualObjects($array[1], $v0);
+    %o XCTAssertEqualObjects($array[2], $v0);
+
+    %o [$array setValue:NSNull.null forKey:@"self"];
+    %o XCTAssertEqualObjects($array[0], NSNull.null);
+}
+
+- (void)testUnmanagedAssignment {
+    $array = (id)$values; ^nl XCTAssertEqualObjects([$array valueForKey:@"self"], ($values)); ^nl 
+
+    $array = $array; ^nl XCTAssertEqualObjects([$array valueForKey:@"self"], ($values)); ^nl 
+}
+
+- (void)testUnmanagedDescription {
+
+}
+
+#pragma mark - Managed
+
+#if 0
+- (void)testUnmanagedArrayCanOutliveParentObject {
+    RLMArray *array;
+    @autoreleasepool {
+        ArrayPropertyObject *arObj = [[ArrayPropertyObject alloc] initWithValue:@[@"arrayObject", @[@[@"a"]], @[]]];
+        array = arObj.array;
+        XCTAssertFalse(array.isInvalidated, @"stringArray should be valid after creation.");
+        arObj = nil;
+    }
+    XCTAssertFalse(array.isInvalidated, @"stringArray should still be valid after parent deletion.");
 }
 
 - (void)testDeleteObjectWithArrayProperty {
@@ -109,483 +460,6 @@
     XCTAssertTrue(firstObject.isInvalidated, @"firstObject should be invalid after deletion.");
     XCTAssertEqual(stringArray.count, 0U, @"stringArray.count should be zero after deleting its only member.");
     [realm commitWriteTransaction];
-}
-
--(void)testInsertMultiple {
-    RLMRealm *realm = [self realmWithTestPath];
-
-    [realm beginWriteTransaction];
-    ArrayPropertyObject *obj = [ArrayPropertyObject createInRealm:realm withValue:@[@"arrayObject", @[], @[]]];
-    StringObject *child1 = [StringObject createInRealm:realm withValue:@[@"a"]];
-    StringObject *child2 = [[StringObject alloc] init];
-    child2.stringCol = @"b";
-    [obj.array addObjects:@[child2, child1]];
-    [realm commitWriteTransaction];
-
-    RLMResults *children = [StringObject allObjectsInRealm:realm];
-    XCTAssertEqualObjects([children[0] stringCol], @"a", @"First child should be 'a'");
-    XCTAssertEqualObjects([children[1] stringCol], @"b", @"Second child should be 'b'");
-}
-
--(void)testInsertAtIndex {
-    RLMRealm *realm = [self realmWithTestPath];
-
-    [realm beginWriteTransaction];
-    ArrayPropertyObject *obj = [ArrayPropertyObject createInRealm:realm withValue:@[@"arrayObject", @[], @[]]];
-    StringObject *child1 = [StringObject createInRealm:realm withValue:@[@"a"]];
-    StringObject *child2 = [[StringObject alloc] init];
-    child2.stringCol = @"b";
-    [obj.array addObject:child2];
-    RLMAssertThrowsWithReasonMatching([obj.array insertObject:child1 atIndex:2], @"must be less than 2");
-    [realm commitWriteTransaction];
-
-    RLMArray *children = obj.array;
-    XCTAssertEqual(children.count, 1U);
-    XCTAssertEqualObjects([children[0] stringCol], @"b", @"Only child should be 'b'");
-}
-
-- (void)testMove {
-    RLMRealm *realm = [self realmWithTestPath];
-
-    ArrayPropertyObject *obj = [[ArrayPropertyObject alloc] initWithValue:@[@"arrayObject", @[@[@"a"], @[@"b"]], @[]]];
-    RLM_GENERIC_ARRAY(StringObject) *children = obj.array;
-
-    [children moveObjectAtIndex:1 toIndex:0];
-
-    XCTAssertEqualObjects([children[0] stringCol], @"b");
-    XCTAssertEqualObjects([children[1] stringCol], @"a");
-
-    [children moveObjectAtIndex:0 toIndex:1];
-
-    XCTAssertEqualObjects([children[0] stringCol], @"a");
-    XCTAssertEqualObjects([children[1] stringCol], @"b");
-
-    [children moveObjectAtIndex:0 toIndex:0];
-
-    XCTAssertEqualObjects([children[0] stringCol], @"a");
-    XCTAssertEqualObjects([children[1] stringCol], @"b");
-
-    RLMAssertThrowsWithReasonMatching([children moveObjectAtIndex:0 toIndex:2], @"must be less than 2");
-    RLMAssertThrowsWithReasonMatching([children moveObjectAtIndex:2 toIndex:0], @"must be less than 2");
-
-    [realm beginWriteTransaction];
-
-    [realm addObject:obj];
-    children = obj.array;
-
-    [children moveObjectAtIndex:1 toIndex:0];
-
-    XCTAssertEqualObjects([children[0] stringCol], @"b");
-    XCTAssertEqualObjects([children[1] stringCol], @"a");
-
-    [children moveObjectAtIndex:0 toIndex:1];
-
-    XCTAssertEqualObjects([children[0] stringCol], @"a");
-    XCTAssertEqualObjects([children[1] stringCol], @"b");
-
-    [children moveObjectAtIndex:0 toIndex:0];
-
-    XCTAssertEqualObjects([children[0] stringCol], @"a");
-    XCTAssertEqualObjects([children[1] stringCol], @"b");
-
-    RLMAssertThrowsWithReasonMatching([children moveObjectAtIndex:0 toIndex:2], @"must be less than 2");
-    RLMAssertThrowsWithReasonMatching([children moveObjectAtIndex:2 toIndex:0], @"must be less than 2");
-
-    [realm commitWriteTransaction];
-
-    RLMAssertThrowsWithReasonMatching([children moveObjectAtIndex:1 toIndex:0], @"write transaction");
-}
-
-- (void)testAddInvalidated {
-    RLMRealm *realm = [RLMRealm defaultRealm];
-
-    [realm beginWriteTransaction];
-    CompanyObject *company = [CompanyObject createInDefaultRealmWithValue:@[@"company", @[]]];
-
-    EmployeeObject *person = [[EmployeeObject alloc] init];
-    person.name = @"Mary";
-    [realm addObject:person];
-    [realm deleteObjects:[EmployeeObject allObjects]];
-
-    RLMAssertThrowsWithReasonMatching([company.employees addObject:person], @"invalidated");
-    RLMAssertThrowsWithReasonMatching([company.employees insertObject:person atIndex:0], @"invalidated");
-
-    [realm cancelWriteTransaction];
-}
-
-- (void)testAddNil {
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    [realm beginWriteTransaction];
-    CompanyObject *company = [CompanyObject createInDefaultRealmWithValue:@[@"company", @[]]];
-
-    RLMAssertThrowsWithReasonMatching([company.employees addObject:self.nonLiteralNil], @"nil");
-    [realm cancelWriteTransaction];
-}
-
-- (void)testUnmanaged {
-    RLMRealm *realm = [self realmWithTestPath];
-
-    ArrayPropertyObject *array = [[ArrayPropertyObject alloc] init];
-    array.name = @"name";
-    XCTAssertNotNil(array.array, @"RLMArray property should get created on access");
-
-    XCTAssertNil(array.array.firstObject, @"No objects added yet");
-    XCTAssertNil(array.array.lastObject, @"No objects added yet");
-
-    StringObject *obj1 = [[StringObject alloc] init];
-    obj1.stringCol = @"a";
-    StringObject *obj2 = [[StringObject alloc] init];
-    obj2.stringCol = @"b";
-    StringObject *obj3 = [[StringObject alloc] init];
-    obj3.stringCol = @"c";
-    [array.array addObject:obj1];
-    [array.array addObject:obj2];
-    [array.array addObject:obj3];
-
-    XCTAssertEqualObjects(array.array.firstObject, obj1, @"Objects should be equal");
-    XCTAssertEqualObjects(array.array.lastObject, obj3, @"Objects should be equal");
-    XCTAssertEqualObjects([array.array objectAtIndex:1], obj2, @"Objects should be equal");
-
-    [realm beginWriteTransaction];
-    [realm addObject:array];
-    [realm commitWriteTransaction];
-
-    XCTAssertEqual(array.array.count, 3U, @"Should have two elements in array");
-    XCTAssertEqualObjects([array.array[0] stringCol], @"a", @"First element should have property value 'a'");
-    XCTAssertEqualObjects([array.array[1] stringCol], @"b", @"Second element should have property value 'b'");
-
-    [realm beginWriteTransaction];
-    [array.array replaceObjectAtIndex:0 withObject:obj3];
-    XCTAssertTrue([[array.array objectAtIndex:0] isEqualToObject:obj3], @"Objects should be replaced");
-    array.array[0] = obj1;
-    XCTAssertTrue([obj1 isEqualToObject:[array.array objectAtIndex:0]], @"Objects should be replaced");
-    [array.array removeLastObject];
-    XCTAssertEqual(array.array.count, 2U, @"2 objects left");
-    [array.array addObject:obj1];
-    [array.array removeAllObjects];
-    XCTAssertEqual(array.array.count, 0U, @"All objects removed");
-    [realm commitWriteTransaction];
-
-    ArrayPropertyObject *intArray = [[ArrayPropertyObject alloc] init];
-    IntObject *intObj = [[IntObject alloc] init];
-    intObj.intCol = 1;
-    RLMAssertThrowsWithReasonMatching([intArray.array addObject:(id)intObj], @"IntObject.*StringObject");
-    [intArray.intArray addObject:intObj];
-
-    XCTAssertThrows([intArray.intArray objectsWhere:@"intCol == 1"], @"Should throw on unmanaged RLMArray");
-    XCTAssertThrows(([intArray.intArray objectsWithPredicate:[NSPredicate predicateWithFormat:@"intCol == %i", 1]]), @"Should throw on unmanaged RLMArray");
-    XCTAssertThrows([intArray.intArray sortedResultsUsingKeyPath:@"intCol" ascending:YES], @"Should throw on unmanaged RLMArray");
-
-    XCTAssertEqual(0U, [intArray.intArray indexOfObjectWhere:@"intCol == 1"]);
-    XCTAssertEqual(0U, ([intArray.intArray indexOfObjectWithPredicate:[NSPredicate predicateWithFormat:@"intCol == %i", 1]]));
-
-    XCTAssertEqual([intArray.intArray indexOfObject:intObj], 0U, @"Should be first element");
-    XCTAssertEqual([intArray.intArray indexOfObject:intObj], 0U, @"Should be first element");
-
-    // test unmanaged with literals
-    __unused ArrayPropertyObject *obj = [[ArrayPropertyObject alloc] initWithValue:@[@"n", @[], @[[[IntObject alloc] initWithValue:@[@1]]]]];
-}
-
-- (void)testUnmanagedPrimitive {
-    AllPrimitiveArrays *obj = [[AllPrimitiveArrays alloc] init];
-    XCTAssertTrue([obj.intObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.floatObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.doubleObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.boolObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.stringObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.dataObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.dateObj isKindOfClass:[RLMArray class]]);
-
-    [obj.intObj addObject:@1];
-    XCTAssertEqualObjects(obj.intObj[0], @1);
-    XCTAssertThrows([obj.intObj addObject:@""]);
-
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    [realm beginWriteTransaction];
-    obj = [AllPrimitiveArrays createInRealm:realm withValue:@[@[],@[],@[],@[],@[],@[],@[]]];
-
-    XCTAssertTrue([obj.intObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.floatObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.doubleObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.boolObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.stringObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.dataObj isKindOfClass:[RLMArray class]]);
-    XCTAssertTrue([obj.dateObj isKindOfClass:[RLMArray class]]);
-
-    [obj.intObj addObject:@5];
-    XCTAssertEqualObjects(obj.intObj.firstObject, @5);
-}
-
-- (void)testReplaceObjectAtIndexInUnmanagedArray {
-    ArrayPropertyObject *array = [[ArrayPropertyObject alloc] init];
-    array.name = @"name";
-
-    StringObject *stringObj1 = [[StringObject alloc] init];
-    stringObj1.stringCol = @"a";
-    StringObject *stringObj2 = [[StringObject alloc] init];
-    stringObj2.stringCol = @"b";
-    StringObject *stringObj3 = [[StringObject alloc] init];
-    stringObj3.stringCol = @"c";
-    [array.array addObject:stringObj1];
-    [array.array addObject:stringObj2];
-    [array.array addObject:stringObj3];
-
-    IntObject *intObj1 = [[IntObject alloc] init];
-    intObj1.intCol = 0;
-    IntObject *intObj2 = [[IntObject alloc] init];
-    intObj2.intCol = 1;
-    IntObject *intObj3 = [[IntObject alloc] init];
-    intObj3.intCol = 2;
-    [array.intArray addObject:intObj1];
-    [array.intArray addObject:intObj2];
-    [array.intArray addObject:intObj3];
-
-    XCTAssertEqualObjects(array.array[0], stringObj1, @"Objects should be equal");
-    XCTAssertEqualObjects(array.array[1], stringObj2, @"Objects should be equal");
-    XCTAssertEqualObjects(array.array[2], stringObj3, @"Objects should be equal");
-    XCTAssertEqual(array.array.count, 3U, @"Should have 3 elements in string array");
-
-    XCTAssertEqualObjects(array.intArray[0], intObj1, @"Objects should be equal");
-    XCTAssertEqualObjects(array.intArray[1], intObj2, @"Objects should be equal");
-    XCTAssertEqualObjects(array.intArray[2], intObj3, @"Objects should be equal");
-    XCTAssertEqual(array.intArray.count, 3U, @"Should have 3 elements in int array");
-
-    StringObject *stringObj4 = [[StringObject alloc] init];
-    stringObj4.stringCol = @"d";
-
-    [array.array replaceObjectAtIndex:0 withObject:stringObj4];
-    XCTAssertTrue([[array.array objectAtIndex:0] isEqualToObject:stringObj4], @"Objects should be replaced");
-    XCTAssertEqual(array.array.count, 3U, @"Should have 3 elements in int array");
-
-    IntObject *intObj4 = [[IntObject alloc] init];
-    intObj4.intCol = 3;
-
-    [array.intArray replaceObjectAtIndex:1 withObject:intObj4];
-    XCTAssertTrue([[array.intArray objectAtIndex:1] isEqualToObject:intObj4], @"Objects should be replaced");
-    XCTAssertEqual(array.intArray.count, 3U, @"Should have 3 elements in int array");
-
-    RLMAssertThrowsWithReasonMatching([array.array replaceObjectAtIndex:0 withObject:(id)intObj4],
-                                      @"IntObject.*StringObject");
-    RLMAssertThrowsWithReasonMatching([array.intArray replaceObjectAtIndex:1 withObject:(id)stringObj4],
-                                      @"StringObject.*IntObject");
-}
-
-- (void)testDeleteObjectInUnmanagedArray {
-    ArrayPropertyObject *array = [[ArrayPropertyObject alloc] init];
-    array.name = @"name";
-
-    StringObject *stringObj1 = [[StringObject alloc] init];
-    stringObj1.stringCol = @"a";
-    StringObject *stringObj2 = [[StringObject alloc] init];
-    stringObj2.stringCol = @"b";
-    StringObject *stringObj3 = [[StringObject alloc] init];
-    stringObj3.stringCol = @"c";
-    [array.array addObject:stringObj1];
-    [array.array addObject:stringObj2];
-    [array.array addObject:stringObj3];
-
-    IntObject *intObj1 = [[IntObject alloc] init];
-    intObj1.intCol = 0;
-    IntObject *intObj2 = [[IntObject alloc] init];
-    intObj2.intCol = 1;
-    IntObject *intObj3 = [[IntObject alloc] init];
-    intObj3.intCol = 2;
-    [array.intArray addObject:intObj1];
-    [array.intArray addObject:intObj2];
-    [array.intArray addObject:intObj3];
-
-    XCTAssertEqualObjects(array.array[0], stringObj1, @"Objects should be equal");
-    XCTAssertEqualObjects(array.array[1], stringObj2, @"Objects should be equal");
-    XCTAssertEqualObjects(array.array[2], stringObj3, @"Objects should be equal");
-    XCTAssertEqual(array.array.count, 3U, @"Should have 3 elements in string array");
-
-    XCTAssertEqualObjects(array.intArray[0], intObj1, @"Objects should be equal");
-    XCTAssertEqualObjects(array.intArray[1], intObj2, @"Objects should be equal");
-    XCTAssertEqualObjects(array.intArray[2], intObj3, @"Objects should be equal");
-    XCTAssertEqual(array.intArray.count, 3U, @"Should have 3 elements in int array");
-
-    [array.array removeLastObject];
-
-    XCTAssertEqualObjects(array.array[0], stringObj1, @"Objects should be equal");
-    XCTAssertEqualObjects(array.array[1], stringObj2, @"Objects should be equal");
-    XCTAssertEqual(array.array.count, 2U, @"Should have 2 elements in string array");
-
-    [array.array removeLastObject];
-
-    XCTAssertEqualObjects(array.array[0], stringObj1, @"Objects should be equal");
-    XCTAssertEqual(array.array.count, 1U, @"Should have 1 elements in string array");
-
-    [array.array removeLastObject];
-
-    XCTAssertEqual(array.array.count, 0U, @"Should have 0 elements in string array");
-
-    [array.intArray removeAllObjects];
-    XCTAssertEqual(array.intArray.count, 0U, @"Should have 0 elements in int array");
-}
-
-- (void)testExchangeObjectAtIndexWithObjectAtIndex {
-
-    void (^test)(RLMArray *) = ^(RLMArray *array) {
-        [array exchangeObjectAtIndex:0 withObjectAtIndex:1];
-        XCTAssertEqual(2U, array.count);
-        XCTAssertEqualObjects(@"b", [array[0] stringCol]);
-        XCTAssertEqualObjects(@"a", [array[1] stringCol]);
-
-        [array exchangeObjectAtIndex:1 withObjectAtIndex:1];
-        XCTAssertEqual(2U, array.count);
-        XCTAssertEqualObjects(@"b", [array[0] stringCol]);
-        XCTAssertEqualObjects(@"a", [array[1] stringCol]);
-
-        [array exchangeObjectAtIndex:1 withObjectAtIndex:0];
-        XCTAssertEqual(2U, array.count);
-        XCTAssertEqualObjects(@"a", [array[0] stringCol]);
-        XCTAssertEqualObjects(@"b", [array[1] stringCol]);
-
-        RLMAssertThrowsWithReasonMatching([array exchangeObjectAtIndex:1 withObjectAtIndex:20], @"less than 2");
-    };
-
-    ArrayPropertyObject *array = [[ArrayPropertyObject alloc] initWithValue:@[@"foo", @[@[@"a"], @[@"b"]], @[]]];
-    test(array.array);
-
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    [realm beginWriteTransaction];
-    [realm addObject:array];
-    test(array.array);
-    [realm commitWriteTransaction];
-}
-
-- (void)testIndexOfObject
-{
-    RLMRealm *realm = [RLMRealm defaultRealm];
-
-    [realm beginWriteTransaction];
-    EmployeeObject *po1 = [EmployeeObject createInRealm:realm withValue:@{@"name": @"Joe",  @"age": @40, @"hired": @YES}];
-    EmployeeObject *po2 = [EmployeeObject createInRealm:realm withValue:@{@"name": @"John", @"age": @30, @"hired": @NO}];
-    EmployeeObject *po3 = [EmployeeObject createInRealm:realm withValue:@{@"name": @"Jill", @"age": @25, @"hired": @YES}];
-    EmployeeObject *deleted = [EmployeeObject createInRealm:realm withValue:@{@"name": @"Jill", @"age": @25, @"hired": @YES}];
-    EmployeeObject *indirectlyDeleted = [EmployeeObject allObjectsInRealm:realm].lastObject;
-    [realm deleteObject:deleted];
-
-    // create company
-    CompanyObject *company = [[CompanyObject alloc] init];
-    company.name = @"name";
-    [company.employees addObjects:[EmployeeObject allObjects]];
-    [company.employees removeObjectAtIndex:1];
-
-    // test unmanaged
-    XCTAssertEqual(0U, [company.employees indexOfObject:po1]);
-    XCTAssertEqual(1U, [company.employees indexOfObject:po3]);
-    XCTAssertEqual((NSUInteger)NSNotFound, [company.employees indexOfObject:po2]);
-
-    // add to realm
-    [realm addObject:company];
-    [realm commitWriteTransaction];
-
-    // test LinkView RLMArray
-    XCTAssertEqual(0U, [company.employees indexOfObject:po1]);
-    XCTAssertEqual(1U, [company.employees indexOfObject:po3]);
-    XCTAssertEqual((NSUInteger)NSNotFound, [company.employees indexOfObject:po2]);
-
-    // non realm employee
-    EmployeeObject *notInRealm = [[EmployeeObject alloc] initWithValue:@[@"NoName", @1, @NO]];
-    XCTAssertEqual((NSUInteger)NSNotFound, [company.employees indexOfObject:notInRealm]);
-
-    // invalid object
-    XCTAssertThrows([company.employees indexOfObject:(EmployeeObject *)company]);
-    RLMAssertThrowsWithReasonMatching([company.employees indexOfObject:deleted], @"invalidated");
-    RLMAssertThrowsWithReasonMatching([company.employees indexOfObject:indirectlyDeleted], @"invalidated");
-
-    RLMResults *employees = [company.employees objectsWhere:@"age = %@", @40];
-    XCTAssertEqual(0U, [employees indexOfObject:po1]);
-    XCTAssertEqual((NSUInteger)NSNotFound, [employees indexOfObject:po3]);
-}
-
-- (void)testIndexOfObjectWhere
-{
-    RLMRealm *realm = [RLMRealm defaultRealm];
-
-    [realm beginWriteTransaction];
-    EmployeeObject *po1 = [EmployeeObject createInRealm:realm withValue:@{@"name": @"Joe",  @"age": @40, @"hired": @YES}];
-    [EmployeeObject createInRealm:realm withValue:@{@"name": @"John", @"age": @30, @"hired": @NO}];
-    EmployeeObject *po3 = [EmployeeObject createInRealm:realm withValue:@{@"name": @"Jill", @"age": @25, @"hired": @YES}];
-    EmployeeObject *po4 = [EmployeeObject createInRealm:realm withValue:@{@"name": @"Bill", @"age": @55, @"hired": @YES}];
-
-    // create company
-    CompanyObject *company = [[CompanyObject alloc] init];
-    company.name = @"name";
-    [company.employees addObjects:@[po3, po1, po4]];
-
-    // test unmanaged
-    XCTAssertEqual(0U, [company.employees indexOfObjectWhere:@"name = 'Jill'"]);
-    XCTAssertEqual(1U, [company.employees indexOfObjectWhere:@"name = 'Joe'"]);
-    XCTAssertEqual((NSUInteger)NSNotFound, [company.employees indexOfObjectWhere:@"name = 'John'"]);
-
-    // add to realm
-    [realm addObject:company];
-    [realm commitWriteTransaction];
-
-    // test LinkView RLMArray
-    XCTAssertEqual(0U, [company.employees indexOfObjectWhere:@"name = 'Jill'"]);
-    XCTAssertEqual(1U, [company.employees indexOfObjectWhere:@"name = 'Joe'"]);
-    XCTAssertEqual((NSUInteger)NSNotFound, [company.employees indexOfObjectWhere:@"name = 'John'"]);
-
-    RLMResults *results = [company.employees objectsWhere:@"age > 30"];
-    XCTAssertEqual(0U, [results indexOfObjectWhere:@"name = 'Joe'"]);
-    XCTAssertEqual(1U, [results indexOfObjectWhere:@"name = 'Bill'"]);
-    XCTAssertEqual((NSUInteger)NSNotFound, [results indexOfObjectWhere:@"name = 'John'"]);
-    XCTAssertEqual((NSUInteger)NSNotFound, [results indexOfObjectWhere:@"name = 'Jill'"]);
-}
-
-- (void)testFastEnumeration
-{
-    RLMRealm *realm = self.realmWithTestPath;
-
-    [realm beginWriteTransaction];
-    CompanyObject *company = [[CompanyObject alloc] init];
-    company.name = @"name";
-    [realm addObject:company];
-    [realm commitWriteTransaction];
-
-    // enumerate empty array
-    for (__unused id obj in company.employees) {
-        XCTFail(@"Should be empty");
-    }
-
-    [realm beginWriteTransaction];
-    for (int i = 0; i < 30; ++i) {
-        EmployeeObject *eo = [EmployeeObject createInRealm:realm withValue:@{@"name": @"Joe",  @"age": @40, @"hired": @YES}];
-        [company.employees addObject:eo];
-    }
-    [realm commitWriteTransaction];
-
-    XCTAssertEqual(company.employees.count, 30U);
-
-    __weak id objects[30];
-    NSInteger count = 0;
-    for (EmployeeObject *e in company.employees) {
-        XCTAssertNotNil(e, @"Object is not nil and accessible");
-        if (count > 16) {
-            // 16 is the size of blocks fast enumeration happens to ask for at
-            // the moment, but of course that's just an implementation detail
-            // that may change
-            XCTAssertNil(objects[count - 16]);
-        }
-        objects[count++] = e;
-    }
-
-    XCTAssertEqual(count, 30, @"should have enumerated 30 objects");
-
-    for (int i = 0; i < count; i++) {
-        XCTAssertNil(objects[i], @"Object should have been released");
-    }
-
-    @autoreleasepool {
-        for (EmployeeObject *e in company.employees) {
-            objects[0] = e;
-            break;
-        }
-    }
-    XCTAssertNil(objects[0], @"Object should have been released");
 }
 
 - (void)testModifyDuringEnumeration {
@@ -829,8 +703,7 @@
     test();
 }
 
-- (void)testValueForCollectionOperationKeyPath
-{
+- (void)testValueForCollectionOperationKeyPath {
     RLMRealm *realm = [RLMRealm defaultRealm];
 
     [realm beginWriteTransaction];
@@ -875,8 +748,7 @@
                                       @"Nested key paths.*not supported");
 }
 
-- (void)testCrossThreadAccess
-{
+- (void)testCrossThreadAccess {
     CompanyObject *company = [[CompanyObject alloc] init];
     company.name = @"name";
 
@@ -957,65 +829,6 @@
     XCTAssertTrue(checkOrder(@[@"age", @"dogName"], @[@NO, @NO], @[b2, a2, b1, a1]));
 }
 
-- (void)testDeleteLinksAndObjectsInArray
-{
-    RLMRealm *realm = [RLMRealm defaultRealm];
-    [realm beginWriteTransaction];
-    EmployeeObject *po1 = [EmployeeObject createInRealm:realm withValue:@[@"Joe", @40, @YES]];
-    EmployeeObject *po2 = [EmployeeObject createInRealm:realm withValue:@[@"John", @30, @NO]];
-    EmployeeObject *po3 = [EmployeeObject createInRealm:realm withValue:@[@"Jill", @25, @YES]];
-
-    CompanyObject *company = [[CompanyObject alloc] init];
-    company.name = @"name";
-    [company.employees addObjects:[EmployeeObject allObjects]];
-    [realm addObject:company];
-
-    [realm commitWriteTransaction];
-
-    RLMArray *peopleInCompany = company.employees;
-
-    // Delete link to employee
-    XCTAssertThrowsSpecificNamed([peopleInCompany removeObjectAtIndex:1], NSException, @"RLMException", @"Not allowed in read transaction");
-    XCTAssertEqual(peopleInCompany.count, 3U, @"No links should have been deleted");
-
-    [realm beginWriteTransaction];
-    XCTAssertThrowsSpecificNamed([peopleInCompany removeObjectAtIndex:3], NSException, @"RLMException", @"Out of bounds");
-    XCTAssertNoThrow([peopleInCompany removeObjectAtIndex:1], @"Should delete link to employee");
-    [realm commitWriteTransaction];
-
-    XCTAssertEqual(peopleInCompany.count, 2U, @"link deleted when accessing via links");
-    EmployeeObject *test = peopleInCompany[0];
-    XCTAssertEqual(test.age, po1.age, @"Should be equal");
-    XCTAssertEqualObjects(test.name, po1.name, @"Should be equal");
-    XCTAssertEqual(test.hired, po1.hired, @"Should be equal");
-    XCTAssertTrue([test isEqualToObject:po1], @"Should be equal");
-
-    test = peopleInCompany[1];
-    XCTAssertEqual(test.age, po3.age, @"Should be equal");
-    XCTAssertEqualObjects(test.name, po3.name, @"Should be equal");
-    XCTAssertEqual(test.hired, po3.hired, @"Should be equal");
-    XCTAssertTrue([test isEqualToObject:po3], @"Should be equal");
-
-    XCTAssertThrowsSpecificNamed([peopleInCompany removeLastObject], NSException, @"RLMException", @"Not allowed in read transaction");
-    XCTAssertThrowsSpecificNamed([peopleInCompany removeAllObjects], NSException, @"RLMException", @"Not allowed in read transaction");
-    XCTAssertThrowsSpecificNamed([peopleInCompany replaceObjectAtIndex:0 withObject:po2], NSException, @"RLMException", @"Not allowed in read transaction");
-    XCTAssertThrowsSpecificNamed([peopleInCompany insertObject:po2 atIndex:0], NSException, @"RLMException", @"Not allowed in read transaction");
-
-    [realm beginWriteTransaction];
-    XCTAssertNoThrow([peopleInCompany removeLastObject], @"Should delete last link");
-    XCTAssertEqual(peopleInCompany.count, 1U, @"1 remaining link");
-    [peopleInCompany replaceObjectAtIndex:0 withObject:po2];
-    XCTAssertEqual(peopleInCompany.count, 1U, @"1 link replaced");
-    [peopleInCompany insertObject:po1 atIndex:0];
-    XCTAssertEqual(peopleInCompany.count, 2U, @"2 links");
-    XCTAssertNoThrow([peopleInCompany removeAllObjects], @"Should delete all links");
-    XCTAssertEqual(peopleInCompany.count, 0U, @"0 remaining links");
-    [realm commitWriteTransaction];
-
-    RLMResults *allPeople = [EmployeeObject allObjects];
-    XCTAssertEqual(allPeople.count, 3U, @"Only links should have been deleted, not the employees");
-}
-
 - (void)testArrayDescription {
     RLMRealm *realm = [RLMRealm defaultRealm];
 
@@ -1050,71 +863,6 @@
                      @".*\n"
                      @"\t... 912 objects skipped.\n"
                      @"\\)");
-}
-
-- (void)testUnmanagedAssignment {
-    IntObject *io1 = [[IntObject alloc] init];
-    IntObject *io2 = [[IntObject alloc] init];
-    IntObject *io3 = [[IntObject alloc] init];
-
-    ArrayPropertyObject *array1 = [[ArrayPropertyObject alloc] init];
-    ArrayPropertyObject *array2 = [[ArrayPropertyObject alloc] init];
-
-    // Assigning NSArray shallow copies
-    array1.intArray = (id)@[io1, io2];
-    XCTAssertEqualObjects([array1.intArray valueForKey:@"self"], (@[io1, io2]));
-
-    [array1 setValue:@[io3, io1] forKey:@"intArray"];
-    XCTAssertEqualObjects([array1.intArray valueForKey:@"self"], (@[io3, io1]));
-
-    array1[@"intArray"] = @[io2, io3];
-    XCTAssertEqualObjects([array1.intArray valueForKey:@"self"], (@[io2, io3]));
-
-    // Assigning RLMArray shallow copies
-    array2.intArray = array1.intArray;
-    XCTAssertEqualObjects([array2.intArray valueForKey:@"self"], (@[io2, io3]));
-
-    [array1.intArray removeAllObjects];
-    XCTAssertEqualObjects([array2.intArray valueForKey:@"self"], (@[io2, io3]));
-
-    // Self-assignment is a no-op
-    array2.intArray = array2.intArray;
-    XCTAssertEqualObjects([array2.intArray valueForKey:@"self"], (@[io2, io3]));
-}
-
-- (void)testManagedAssignment {
-    RLMRealm *realm = self.realmWithTestPath;
-    [realm beginWriteTransaction];
-
-    IntObject *io1 = [IntObject createInRealm:realm withValue:@[@1]];
-    IntObject *io2 = [IntObject createInRealm:realm withValue:@[@2]];
-    IntObject *io3 = [IntObject createInRealm:realm withValue:@[@3]];
-
-    ArrayPropertyObject *array1 = [ArrayPropertyObject createInRealm:realm withValue:@[@""]];
-    ArrayPropertyObject *array2 = [ArrayPropertyObject createInRealm:realm withValue:@[@""]];
-
-    // Assigning NSArray shallow copies
-    array1.intArray = (id)@[io1, io2];
-    XCTAssertEqualObjects([array1.intArray valueForKey:@"intCol"], (@[@1, @2]));
-
-    [array1 setValue:@[io3, io1] forKey:@"intArray"];
-    XCTAssertEqualObjects([array1.intArray valueForKey:@"intCol"], (@[@3, @1]));
-
-    array1[@"intArray"] = @[io2, io3];
-    XCTAssertEqualObjects([array1.intArray valueForKey:@"intCol"], (@[@2, @3]));
-
-    // Assigning RLMArray shallow copies
-    array2.intArray = array1.intArray;
-    XCTAssertEqualObjects([array2.intArray valueForKey:@"intCol"], (@[@2, @3]));
-
-    [array1.intArray removeAllObjects];
-    XCTAssertEqualObjects([array2.intArray valueForKey:@"intCol"], (@[@2, @3]));
-
-    // Self-assignment is a no-op
-    array2.intArray = array2.intArray;
-    XCTAssertEqualObjects([array2.intArray valueForKey:@"intCol"], (@[@2, @3]));
-
-    [realm cancelWriteTransaction];
 }
 
 - (void)testAssignIncorrectType {
@@ -1435,4 +1183,5 @@
     RLMAssertThrowsWithReasonMatching(array[0] = io, @"write transaction");
     RLMAssertThrowsWithReasonMatching([array setValue:@1 forKey:@"intCol"], @"write transaction");
 }
+#endif
 @end
