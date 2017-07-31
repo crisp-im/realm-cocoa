@@ -11,6 +11,10 @@ x.x.x Release notes (yyyy-MM-dd)
 * `-[RLMRealm addOrUpdateObjects:]` and `-[RLMRealm deleteObjects:]` now
   require their argument to conform to `NSFastEnumeration`, to match similar
   APIs that also take collections.
+* Fix an issue where if a Swift model class defined non-generic managed
+  properties after generic Realm properties (like `List<T>`), the schema
+  would be constructed incorrectly. Fixes an issue where creating such
+  models from an array could fail.
 
 ### Enhancements
 
