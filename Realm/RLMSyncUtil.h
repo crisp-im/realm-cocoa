@@ -172,7 +172,7 @@ typedef RLM_ERROR_ENUM(NSInteger, RLMSyncAuthError, RLMSyncAuthErrorDomain) {
     /// An error that indicates that the user cannot be registered as it exists already.
     RLMSyncAuthErrorUserAlreadyExists               = 613,
 
-    /// An error that indicates the path is invalid or the user doesn't have access to the Realm there.
+    /// An error that indicates the path is invalid or the user doesn't have access to that Realm.
     RLMSyncAuthErrorAccessDeniedOrInvalidPath       = 614,
 
     /// An error that indicates the refresh token was invalid.

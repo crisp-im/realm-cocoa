@@ -138,8 +138,8 @@ NS_SWIFT_UNAVAILABLE("Use the full version of this API.");
 - (void)logOut;
 
 /**
- An optional error handler which can be set to notify the host application should
- the user encounter an error. Errors reported by this error handler are always
+ An optional error handler which can be set to notify the host application when
+ the user encounters an error. Errors reported by this error handler are always
  `RLMSyncAuthError`s.
 
  @note Check for `RLMSyncAuthErrorInvalidAccessToken` to see if the user has

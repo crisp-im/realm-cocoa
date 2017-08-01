@@ -354,9 +354,9 @@ class SwiftObjectServerTests: SwiftSyncTestCase {
             }
 
             // Screw up the token on the user.
-            mungeRefreshToken(for: user, value: "not-a-real-token")
+            manuallySetRefreshToken(for: user, value: "not-a-real-token")
 
-            // Try to log in a Realm; this will cause our errorHandler block defined above to be fired.
+            // Try to open a Realm with the user; this will cause our errorHandler block defined above to be fired.
             _ = try immediatelyOpenRealm(url: realmURL, user: user)
             if !invoked {
                 waitForExpectations(timeout: 10.0, handler: nil)

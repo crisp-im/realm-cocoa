@@ -54,8 +54,8 @@ private:
     std::mutex m_mutex;
 
     /**
-     An optional callback that can be used to inform an application should a request to
-     the authentication server indicate the user has expired.
+     An optional callback invoked when the authentication server reports the user as
+     being in an expired state.
      */
     RLMUserErrorReportingBlock m_error_handler;
     mutable std::mutex m_error_handler_mutex;

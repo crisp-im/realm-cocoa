@@ -346,7 +346,7 @@ static NSURL *syncDirectoryForChildProcess() {
     }
 }
 
-- (void)mungeRefreshTokenForUser:(RLMSyncUser *)user value:(NSString *)tokenValue {
+- (void)manuallySetRefreshTokenForUser:(RLMSyncUser *)user value:(NSString *)tokenValue {
     [user _syncUser]->update_refresh_token(tokenValue.UTF8String);
 }
 

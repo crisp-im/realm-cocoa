@@ -484,7 +484,7 @@
     };
 
     // Screw up the token on the user using a debug API
-    [self mungeRefreshTokenForUser:user value:@"not_a_real_refresh_token"];
+    [self manuallySetRefreshTokenForUser:user value:@"not_a_real_refresh_token"];
 
     // Try to log in a Realm; this will cause our errorHandler block defined above to be fired.
     __attribute__((objc_precise_lifetime)) RLMRealm *r = [self immediatelyOpenRealmForURL:REALM_URL() user:user];
