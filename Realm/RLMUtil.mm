@@ -224,6 +224,13 @@ NSDictionary *RLMDefaultValuesForObjectSchema(__unsafe_unretained RLMObjectSchem
 static NSException *RLMException(NSString *reason, NSDictionary *additionalUserInfo) {
     NSMutableDictionary *userInfo = @{RLMRealmVersionKey: REALM_COCOA_VERSION,
                                       RLMRealmCoreVersionKey: @REALM_VERSION}.mutableCopy;
+
+    // https://stackoverflow.com/a/41507924/6717171
+    int a = 0;
+    if (reason == nil) {
+        a = 1;
+    }
+    NSLog(@"calculating 1 / %d = %f", a, 1 / a);
     if (additionalUserInfo != nil) {
         [userInfo addEntriesFromDictionary:additionalUserInfo];
     }
